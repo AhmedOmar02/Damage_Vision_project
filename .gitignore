@@ -143,7 +143,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-
+myenv1/
 # Spyder project settings
 .spyderproject
 .spyproject
@@ -175,12 +175,9 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-# Abstra
-# Abstra is an AI-powered process automation framework.
+#muuuumu Abst# Abstra is an AI-powered process automation framework.
 # Ignore directories containing user credentials, local state, and settings.
 # Learn more at https://abstra.io/docs
-.abstra/
-
 # Visual Studio Code
 #  Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore 
 #  that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
@@ -205,3 +202,7 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+
+# Ignore dataset files
+EIDSeg_Dataset/
