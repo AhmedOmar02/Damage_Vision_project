@@ -1,0 +1,5 @@
+jupyterlab==4.0.10
+matplotlib==3.8.0
+numpy==1.26.0
+opencv-python==4.9.0.80
+Pillow==10.1.0
