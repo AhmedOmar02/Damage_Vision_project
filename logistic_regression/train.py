@@ -12,7 +12,7 @@ import time
 import pickle
 
 import numpy as np
-from xml_utils import parse_cvat_xml_all_labels, label_Y_binary
+from xml_utils import parse_cvat_xml_all_labels, label_Y_binary, parse_destroyed_with_size_check
 from data_loader import load_and_resize_images, build_label_array
 from model import model
 from eval_utils import print_report
@@ -32,12 +32,14 @@ LR = 0.001
 def main():
     start_time = time.time()
     # Parse XMLs
-    labels_train_raw = parse_cvat_xml_all_labels(TRAIN_XML)
-    labels_test_raw = parse_cvat_xml_all_labels(TEST_XML)
+    #labels_train_raw = parse_cvat_xml_all_labels(TRAIN_XML)
+    #labels_test_raw = parse_cvat_xml_all_labels(TEST_XML)
 
     # Convert textual labels to integer labels if needed
-    Y_train_map = label_Y_binary(labels_train_raw)
-    Y_test_map = label_Y_binary(labels_test_raw)
+    #Y_train_map = label_Y_binary(labels_train_raw)
+    #Y_test_map = label_Y_binary(labels_test_raw)
+    Y_train_map = parse_destroyed_with_size_check(TRAIN_XML)
+    Y_test_map = parse_destroyed_with_size_check(TEST_XML)
 
     # Load images
     X_train_org, ordered_filenames_train = load_and_resize_images(TRAIN_IMAGES, size=IMAGE_SIZE)

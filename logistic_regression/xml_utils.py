@@ -1,7 +1,7 @@
 import xml.etree.ElementTree as ET
 from typing import Dict, List
 import numpy as np
-
+    
 
 def parse_cvat_xml_all_labels(path: str) -> Dict[str, List[str]]:
     """Parse CVAT XML and return all labels per image."""
@@ -42,12 +42,26 @@ def label_Y_binary(labels_per_image: dict) -> dict:
         result[filename] = 1 if is_destroyed else 0
     
     return result
+
+
+def polygon_area(coords):
+    """Compute polygon area using the Shoelace formula."""
+    if len(coords) < 3:
+        return 0.0
+
+    x = np.array([p[0] for p in coords])
+    y = np.array([p[1] for p in coords])
+
+    return 0.5 * abs(np.dot(x, np.roll(y, 1)) - np.dot(y, np.roll(x, 1)))
+
+
+def parse_destroyed_with_size_check(path: str, min_coverage: float = 0.05) -> Dict[str, int]:
+    """
+    Binary classification:
+    Destroyed (1) if ANY polygon with destroyed label covers > min_coverage of image.
+    Otherwise Not Destroyed (0).
+    """
     
-def parse_destroyed_with_size_check(path: str, min_coverage=0.05):
-    """
-    Binary classification: image is Destroyed (1) vs Not Destroyed (0)
-    A polygon is only counted if it covers > min_coverage of the image.
-    """
     DESTROYED_LABELS = {"D_Building", "Debris"}
     result = {}
 
@@ -56,9 +70,10 @@ def parse_destroyed_with_size_check(path: str, min_coverage=0.05):
 
     for image in root.findall(".//image"):
         filename = image.get("name")
-        if filename is None:
+        if not filename:
             continue
 
+        # get image size
         width = int(image.get("width", 0))
         height = int(image.get("height", 0))
         image_area = width * height
@@ -69,7 +84,6 @@ def parse_destroyed_with_size_check(path: str, min_coverage=0.05):
 
         is_destroyed = False
 
-        # iterate polygons
         for polygon in image.findall("polygon"):
             label = polygon.get("label")
             points = polygon.get("points")
@@ -77,24 +91,20 @@ def parse_destroyed_with_size_check(path: str, min_coverage=0.05):
             if not label or not points:
                 continue
 
-            # ignore non-destroyed labels
             if label not in DESTROYED_LABELS:
                 continue
 
+            # parse polygon points
             try:
-                coords = [tuple(map(float, p.split(",")))
-                          for p in points.split(";") if p]
-                xs = [x for x, y in coords]
-                ys = [y for x, y in coords]
+                coords = [tuple(map(float, p.split(',')))
+                          for p in points.split(';') if p]
             except:
                 continue
 
-            if len(xs) == 0:
-                continue
+            # compute real polygon area
+            poly_area = polygon_area(coords)
 
-            # bounding-box area
-            bbox_area = (max(xs) - min(xs)) * (max(ys) - min(ys))
-            coverage = bbox_area / image_area
+            coverage = poly_area / image_area
 
             if coverage >= min_coverage:
                 is_destroyed = True
@@ -103,4 +113,3 @@ def parse_destroyed_with_size_check(path: str, min_coverage=0.05):
         result[filename] = int(is_destroyed)
 
     return result
-
