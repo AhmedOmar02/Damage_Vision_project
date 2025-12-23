@@ -1,26 +1,58 @@
-# Damage_Vision_project          Machine Learning Project
-*A Machine Learning & Deep Learning Project*
+Damage\_Vision
+==============
 
-This project is part of my ongoing **learning journey in Machine Learning and Deep Learning**.  
-I am developing it in parallel with the **Deep Learning Specialization by deeplearning.ai**, applying each concept as I learn it and watching the project evolve step by step.
+**Machine Learning & Deep Learning Project**
 
-## Project Goal  
-To build models that can analyze building images and estimate the **level of structural damage**, such as:
+Project Overview
+----------------
 
-- No damage  
-- Minor damage  
-- Partial destruction  
-- Severe destruction  
+**Damage\_Vision** aims to build machine learning models that analyze images of buildings and estimate the level of structural damage.
 
-The long-term aim is to create a practical tool that can support **post-war assessment and reconstruction efforts in Gaza**, helping communities rebuild safely and efficiently.
+The long-term vision is to classify damage into multiple levels, such as:
 
+*   No damage
+    
+*   Minor damage
+    
+*   Partial destruction
+    
+*   Severe destruction
+    
 
-## Why This Project Matters  
-Gaza is emerging from one of the most destructive periods in its history.  
-A reliable, automated, affordable damage-assessment system can help:
+However, the project is being developed **incrementally**.
 
-- Speed up inspection of damaged homes  
-- Support prioritization for reconstruction  
-- Provide consistent, data-driven assessments  
-- Reduce the need for dangerous on-site evaluations  
+### Current Stage (Initial Version)
 
+As a starting point, the project focuses on a **binary image classification task**:
+
+*   **Destroyed**
+    
+*   **Not destroyed**
+    
+
+This allows me to build a solid foundation, validate the data pipeline, and apply core deep learning concepts before moving to more detailed damage estimation (e.g., multi-class classification or percentage-based damage assessment).
+
+Learning-Driven Development
+---------------------------
+
+This project is part of my ongoing learning journey in **Machine Learning and Deep Learning**.
+
+I am developing it in parallel with the **Deep Learning Specialization by deeplearning.ai**, applying each concept as I learn it — from data preparation and model design to training, evaluation, and optimization.As my knowledge grows, the project evolves step by step in complexity and capability.
+
+Why This Project Matters
+------------------------
+
+Gaza is emerging from one of the most destructive periods in its history.Assessing structural damage manually is time-consuming, costly, and often dangerous.
+
+A reliable, automated, and affordable damage-assessment system can help:
+
+*   Speed up the inspection of damaged buildings
+    
+*   Support prioritization for reconstruction efforts
+    
+*   Provide consistent, data-driven assessments
+    
+*   Reduce the need for risky on-site evaluations
+    
+
+The long-term goal is to contribute, even in a small way, to safer and more efficient post-war recovery and rebuilding.
