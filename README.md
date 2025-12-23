@@ -37,7 +37,7 @@ Learning-Driven Development
 
 This project is part of my ongoing learning journey in **Machine Learning and Deep Learning**.
 
-I am developing it in parallel with the **Deep Learning Specialization by deeplearning.ai**, applying each concept as I learn it — from data preparation and model design to training, evaluation, and optimization.As my knowledge grows, the project evolves step by step in complexity and capability.
+I am developing it in parallel with the **Deep Learning Specialization by deeplearning.ai** by **Andrew Ng**, applying each concept as I learn it — from data preparation and model design to training, evaluation, and optimization.As my knowledge grows, the project evolves step by step in complexity and capability.
 
 Why This Project Matters
 ------------------------
