@@ -577,6 +577,64 @@ def L_layer_model(X, Y, layers_dims, learning_rate = 0.0075, num_iterations = 30
     
     return parameters, costs
 
+# GRADED FUNCTION: random_mini_batches
+
+def random_mini_batches(X, Y, mini_batch_size = 64, seed = 0):
+    """
+    Creates a list of random minibatches from (X, Y)
+    
+    Arguments:
+    X -- input data, of shape (input size, number of examples)
+    Y -- true "label" vector (1 for blue dot / 0 for red dot), of shape (1, number of examples)
+    mini_batch_size -- size of the mini-batches, integer
+    
+    Returns:
+    mini_batches -- list of synchronous (mini_batch_X, mini_batch_Y)
+    """
+    
+    np.random.seed(seed)            # To make your "random" minibatches the same as ours
+    m = X.shape[1]                  # number of training examples
+    mini_batches = []
+        
+    # Step 1: Shuffle (X, Y)
+    permutation = list(np.random.permutation(m))
+    shuffled_X = X[:, permutation]
+    shuffled_Y = Y[:, permutation].reshape((1, m))
+    
+    inc = mini_batch_size
+
+    # Step 2 - Partition (shuffled_X, shuffled_Y).
+    # Cases with a complete mini batch size only i.e each of 64 examples.
+    num_complete_minibatches = math.floor(m / mini_batch_size) # number of mini batches of size mini_batch_size in your partitionning
+    start_index= 0
+    for k in range(0, num_complete_minibatches):
+        # (approx. 2 lines)
+        # mini_batch_X =  
+        # mini_batch_Y =
+        # YOUR CODE STARTS HERE
+        start_index= k*inc
+        mini_batch_X = shuffled_X[:,start_index: start_index+inc ]
+        mini_batch_Y = shuffled_Y[:,start_index: start_index+inc ]
+        # YOUR CODE ENDS HERE
+        mini_batch = (mini_batch_X, mini_batch_Y)
+        mini_batches.append(mini_batch)
+    
+    # For handling the end case (last mini-batch < mini_batch_size i.e less than 64)
+    if m % mini_batch_size != 0:
+        #(approx. 2 lines)
+        # mini_batch_X =
+        # mini_batch_Y =
+        # YOUR CODE STARTS HERE
+        start_index= num_complete_minibatches*inc
+        mini_batch_X = shuffled_X[:,start_index: start_index+(m % mini_batch_size) ]
+        mini_batch_Y = shuffled_Y[:,start_index: start_index+(m % mini_batch_size) ]
+        
+        # YOUR CODE ENDS HERE
+        mini_batch = (mini_batch_X, mini_batch_Y)
+        mini_batches.append(mini_batch)
+    
+    return mini_batches
+
 
 # Adam structure
 # GRADED FUNCTION: initialize_adam
@@ -623,6 +681,83 @@ def initialize_adam(parameters) :
     
     return v, s
 
+
+# GRADED FUNCTION: update_parameters_with_momentum
+
+def update_parameters_with_momentum(parameters, grads, v, beta, learning_rate):
+    """
+    Update parameters using Momentum
+    
+    Arguments:
+    parameters -- python dictionary containing your parameters:
+                    parameters['W' + str(l)] = Wl
+                    parameters['b' + str(l)] = bl
+    grads -- python dictionary containing your gradients for each parameters:
+                    grads['dW' + str(l)] = dWl
+                    grads['db' + str(l)] = dbl
+    v -- python dictionary containing the current velocity:
+                    v['dW' + str(l)] = ...
+                    v['db' + str(l)] = ...
+    beta -- the momentum hyperparameter, scalar
+    learning_rate -- the learning rate, scalar
+    
+    Returns:
+    parameters -- python dictionary containing your updated parameters 
+    v -- python dictionary containing your updated velocities
+    """
+
+    L = len(parameters) // 2 # number of layers in the neural networks
+    
+    # Momentum update for each parameter
+    for l in range(1, L + 1):
+        
+        # (approx. 4 lines)
+        # compute velocities
+        # v["dW" + str(l)] = ...
+        # v["db" + str(l)] = ...
+        # update parameters
+        # parameters["W" + str(l)] = ...
+        # parameters["b" + str(l)] = ...
+        # YOUR CODE STARTS HERE
+        v["dW"+ str(l)] = beta*v["dW"+ str(l)] +(1-beta)*grads['dW' + str(l)]
+        v["db"+ str(l)] = beta*v["db"+ str(l)] +(1-beta)* grads['db' + str(l)]
+        
+        parameters["W" + str(l)] -= learning_rate*v["dW"+ str(l)]
+        parameters["b" + str(l)] -= learning_rate*v["db"+ str(l)]
+        # YOUR CODE ENDS HERE
+        
+    return parameters, v
+def initialize_velocity(parameters):
+    """
+    Initializes the velocity as a python dictionary with:
+                - keys: "dW1", "db1", ..., "dWL", "dbL" 
+                - values: numpy arrays of zeros of the same shape as the corresponding gradients/parameters.
+    Arguments:
+    parameters -- python dictionary containing your parameters.
+                    parameters['W' + str(l)] = Wl
+                    parameters['b' + str(l)] = bl
+    
+    Returns:
+    v -- python dictionary containing the current velocity.
+                    v['dW' + str(l)] = velocity of dWl
+                    v['db' + str(l)] = velocity of dbl
+    """
+    
+    L = len(parameters) // 2 # number of layers in the neural networks
+    v = {}
+    
+    # Initialize velocity
+    for l in range(1, L + 1):
+        # (approx. 2 lines)
+        # v["dW" + str(l)] =
+        # v["db" + str(l)] =
+        # YOUR CODE STARTS HERE
+        v["dW" + str(l)] = np.zeros(parameters['W' + str(l)].shape)
+        v["db" + str(l)] = np.zeros(parameters['b' + str(l)].shape)
+        
+        # YOUR CODE ENDS HERE
+        
+    return v
 # GRADED FUNCTION: update_parameters_with_adam
 
 def update_parameters_with_adam(parameters, grads, v, s, t, learning_rate = 0.01,
@@ -710,7 +845,7 @@ def update_parameters_with_adam(parameters, grads, v, s, t, learning_rate = 0.01
     return parameters, v, s, v_corrected, s_corrected
 
 
-def model(X, Y, layers_dims, optimizer, learning_rate = 0.0007, mini_batch_size = 64, beta = 0.9,
+def optimized_model(X, Y, layers_dims, optimizer, learning_rate = 0.0007, mini_batch_size = 64, beta = 0.9,
           beta1 = 0.9, beta2 = 0.999,  epsilon = 1e-8, num_epochs = 5000, print_cost = True):
     """
     3-layer neural network model which can be run in different optimizer modes.
