@@ -4,6 +4,7 @@ import xml.etree.ElementTree as ET
 from typing import Dict, Tuple, List
 import numpy as np
 import cv2
+import matplotlib.pyplot as plt
 
 def polygon_area(coords: List[Tuple[float, float]]) -> float:
     """Compute polygon area using the shoelace formula.
@@ -875,7 +876,7 @@ def optimized_model(X, Y, layers_dims, optimizer, learning_rate = 0.0007, mini_b
     m = X.shape[1]                   # number of training examples
     
     # Initialize parameters
-    parameters = initialize_parameters(layers_dims)
+    parameters = initialize_parameters_deep(layers_dims)
 
     # Initialize the optimizer
     if optimizer == "gd":
@@ -899,17 +900,18 @@ def optimized_model(X, Y, layers_dims, optimizer, learning_rate = 0.0007, mini_b
             (minibatch_X, minibatch_Y) = minibatch
 
             # Forward propagation
-            a3, caches = forward_propagation(minibatch_X, parameters)
+            AL, caches = L_model_forward(minibatch_X, parameters)
 
             # Compute cost and add to the cost total
-            cost_total += compute_cost(a3, minibatch_Y)
+            cost_total += compute_cost(AL, minibatch_Y)
 
             # Backward propagation
-            grads = backward_propagation(minibatch_X, minibatch_Y, caches)
+            grads = L_model_backward(AL, Y, caches)
 
             # Update parameters
             if optimizer == "gd":
-                parameters = update_parameters_with_gd(parameters, grads, learning_rate)
+                #parameters = update_parameters_with_gd(parameters, grads, learning_rate)
+                pass
             elif optimizer == "momentum":
                 parameters, v = update_parameters_with_momentum(parameters, grads, v, beta, learning_rate)
             elif optimizer == "adam":
