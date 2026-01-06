@@ -5,6 +5,7 @@ from typing import Dict, Tuple, List
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
+import math
 
 def polygon_area(coords: List[Tuple[float, float]]) -> float:
     """Compute polygon area using the shoelace formula.
