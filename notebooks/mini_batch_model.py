@@ -164,7 +164,7 @@ def predict(X: np.ndarray, parameters: Dict[str, np.ndarray]) -> np.ndarray:
 # ---------------------------
 # Full model: trains using mini-batches
 # ---------------------------
-def L_layer_model(X_input: np.ndarray,
+def L_layer_model_mini_batch(X_input: np.ndarray,
                   Y_input: np.ndarray,
                   layers_dims: List[int],
                   learning_rate: float = 0.0075,
