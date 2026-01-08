@@ -227,3 +227,45 @@ def L_layer_model_mini_batch(X_input: np.ndarray,
         if print_cost and (epoch % max(1, num_epochs // 10) == 0):
             print(f"Epoch {epoch}/{num_epochs} - cost: {epoch_cost:.6f}")
     return parameters, costs
+
+
+def inverse_time_decay(lr0, epoch, decay_rate):
+    return lr0 / (1 + decay_rate * epoch)
+
+def Mini_batch_with_Learning_Rate_Decay_Model(
+    X, Y, layers_dims,
+    learning_rate0=0.01,
+    num_epochs=1000,
+    mini_batch_size=64,
+    decay_rate=None,
+    decay_fn=None,
+    print_cost=True
+):
+    parameters = initialize_parameters_deep(layers_dims, init="he")
+    costs = []
+
+    for epoch in range(num_epochs):
+
+        # 🔽 learning rate decay (ONCE per epoch)
+        if decay_fn is not None and decay_rate is not None:
+            learning_rate = decay_fn(learning_rate0, epoch, decay_rate)
+        else:
+            learning_rate = learning_rate0
+
+        minibatches = random_mini_batches(X, Y, mini_batch_size)
+
+        epoch_cost = 0
+        for minibatch_X, minibatch_Y in minibatches:
+            AL, caches = L_model_forward(minibatch_X, parameters)
+            cost = compute_cost(AL, minibatch_Y)
+            grads = L_model_backward(AL, minibatch_Y, caches)
+            parameters = update_parameters(parameters, grads, learning_rate)
+            epoch_cost += cost * minibatch_X.shape[1]
+
+        epoch_cost /= X.shape[1]
+        costs.append(epoch_cost)
+
+        if print_cost and epoch % 100 == 0:
+            print(f"Epoch {epoch} | lr={learning_rate:.6f} | cost={epoch_cost:.6f}")
+
+    return parameters, costs
