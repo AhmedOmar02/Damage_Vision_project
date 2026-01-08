@@ -255,7 +255,7 @@ def initialize_parameters_deep(layer_dims):
     L = len(layer_dims)            # number of layers in the network
 
     for l in range(1, L):
-        parameters['W' + str(l)] = np.random.randn(layer_dims[l], layer_dims[l-1]) / np.sqrt(layer_dims[l-1]) #*0.01
+        parameters['W' + str(l)] = np.random.randn(layer_dims[l], layer_dims[l-1]) * 0.01
         parameters['b' + str(l)] = np.zeros((layer_dims[l], 1))
         
         assert(parameters['W' + str(l)].shape == (layer_dims[l], layer_dims[l-1]))
@@ -368,6 +368,9 @@ def compute_cost(AL, Y):
     
     m = Y.shape[1]
 
+
+    epsilon = 1e-8
+    AL = np.clip(AL, epsilon, 1 - epsilon)
     # Compute loss from aL and y.
     cost = (1./m) * (-np.dot(Y,np.log(AL).T) - np.dot(1-Y, np.log(1-AL).T))
     
@@ -576,6 +579,7 @@ def L_layer_model(X, Y, layers_dims, learning_rate = 0.0075, num_iterations = 30
             print("Cost after iteration {}: {}".format(i, np.squeeze(cost)))
         if i % 100 == 0:
             costs.append(cost)
+            
     
     return parameters, costs
 
@@ -847,7 +851,7 @@ def update_parameters_with_adam(parameters, grads, v, s, t, learning_rate = 0.01
     return parameters, v, s, v_corrected, s_corrected
 
 
-def optimized_model(X, Y, layers_dims, optimizer, learning_rate = 0.0007, mini_batch_size = 64, beta = 0.9,
+def optimized_model1(X, Y, layers_dims, optimizer, learning_rate = 0.0007, mini_batch_size = 64, beta = 0.9,
           beta1 = 0.9, beta2 = 0.999,  epsilon = 1e-8, num_epochs = 5000, print_cost = True):
     """
     3-layer neural network model which can be run in different optimizer modes.
@@ -904,10 +908,10 @@ def optimized_model(X, Y, layers_dims, optimizer, learning_rate = 0.0007, mini_b
             AL, caches = L_model_forward(minibatch_X, parameters)
 
             # Compute cost and add to the cost total
-            cost_total += compute_cost(AL, minibatch_Y)
+            cost_total += compute_cost(AL, minibatch_Y)* minibatch_Y.shape[1]
 
             # Backward propagation
-            grads = L_model_backward(AL, Y, caches)
+            grads = L_model_backward(AL, minibatch_Y, caches)
 
             # Update parameters
             if optimizer == "gd":
