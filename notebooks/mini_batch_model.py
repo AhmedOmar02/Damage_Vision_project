@@ -238,7 +238,6 @@ def Mini_batch_with_Learning_Rate_Decay_Model(
     num_epochs=1000,
     mini_batch_size=64,
     decay_rate=None,
-    decay_fn=None,
     print_cost=True
 ):
     parameters = initialize_parameters_deep(layers_dims, init="he")
@@ -247,8 +246,8 @@ def Mini_batch_with_Learning_Rate_Decay_Model(
     for epoch in range(num_epochs):
 
         # 🔽 learning rate decay (ONCE per epoch)
-        if decay_fn is not None and decay_rate is not None:
-            learning_rate = decay_fn(learning_rate0, epoch, decay_rate)
+        if  decay_rate is not None:
+            learning_rate = inverse_time_decay(learning_rate0, epoch, decay_rate)
         else:
             learning_rate = learning_rate0
 
@@ -265,7 +264,158 @@ def Mini_batch_with_Learning_Rate_Decay_Model(
         epoch_cost /= X.shape[1]
         costs.append(epoch_cost)
 
-        if print_cost and epoch % 100 == 0:
+        if print_cost and epoch % 20 == 0:
             print(f"Epoch {epoch} | lr={learning_rate:.6f} | cost={epoch_cost:.6f}")
+
+    return parameters, costs
+
+def compute_cost_with_regularization(AL, Y, parameters, lambd):
+    """
+    Implement the cost function with L2 regularization.
+
+    Arguments:
+    AL -- probability vector from forward propagation, shape (1, m)
+    Y -- true labels vector, shape (1, m)
+    parameters -- python dictionary containing W1...WL
+    lambd -- regularization parameter
+
+    Returns:
+    cost -- regularized cost
+    """
+    m = Y.shape[1]
+    
+    # Cross-entropy cost
+    cross_entropy_cost = compute_cost(AL, Y)
+        
+    # L2 regularization cost
+    L2_regularization_cost = 0
+    L = len(parameters) // 2  # number of layers
+    
+    for l in range(1, L + 1):
+        L2_regularization_cost += np.sum(np.square(parameters["W" + str(l)]))
+    
+    L2_regularization_cost *= (lambd / (2 * m))
+    
+    cost = cross_entropy_cost + L2_regularization_cost
+    
+    return cost
+
+
+def L_model_backward_with_regularization(AL, Y, caches, lambd):
+    """
+    Implement backward propagation with L2 regularization for [LINEAR->RELU]*(L-1)->LINEAR->SIGMOID
+    
+    Arguments:
+    AL -- probability vector, output of forward propagation (1, m)
+    Y -- true labels vector (1, m)
+    caches -- list of caches from L_model_forward
+    lambd -- regularization parameter
+    
+    Returns:
+    grads -- dictionary with gradients
+    """
+    
+    grads = {}
+    L = len(caches)           # number of layers
+    m = AL.shape[1]
+    Y = Y.reshape(AL.shape)
+    
+    # ---------- OUTPUT LAYER (SIGMOID) ----------
+    current_cache = caches[L - 1]
+    
+    dAL = - (np.divide(Y, AL) - np.divide(1 - Y, 1 - AL))
+    
+    dA_prev, dW, db = linear_activation_backward(
+        dAL, current_cache, activation="sigmoid"
+    )
+    
+    grads["dW" + str(L)] = dW + (lambd / m) * current_cache[0][1]
+    grads["db" + str(L)] = db
+    grads["dA" + str(L - 1)] = dA_prev
+    
+    # ---------- HIDDEN LAYERS (RELU) ----------
+    for l in reversed(range(L - 1)):
+        current_cache = caches[l]
+        
+        dA_prev, dW, db = linear_activation_backward(
+            grads["dA" + str(l + 1)], current_cache, activation="relu"
+        )
+        
+        grads["dW" + str(l + 1)] = dW + (lambd / m) * current_cache[0][1]
+        grads["db" + str(l + 1)] = db
+        grads["dA" + str(l)] = dA_prev
+    
+    return grads
+
+
+
+def miniBatch_model_regularized(
+    X, Y,
+    layers_dims,
+    learning_rate0=0.01,
+    num_epochs=1000,
+    mini_batch_size=64,
+    lambd=0.0,
+    decay_rate=None,
+    print_cost=True,
+    seed=1
+):
+    np.random.seed(seed)
+    m = X.shape[1]
+    Y = Y.reshape(1, m)
+
+    # Normalize if needed
+    if X.max() > 1:
+        X = X / 255.0
+
+    parameters = initialize_parameters_deep(layers_dims, init="he", seed=seed)
+    costs = []
+
+    for epoch in range(num_epochs):
+
+        # -------- learning rate decay --------
+        if decay_rate is not None:
+            learning_rate = inverse_time_decay(learning_rate0, epoch, decay_rate)
+        else:
+            learning_rate = learning_rate0
+
+        minibatches = random_mini_batches(X, Y, mini_batch_size, seed + epoch)
+        epoch_cost = 0
+
+        for minibatch_X, minibatch_Y in minibatches:
+
+            # Forward
+            AL, caches = L_model_forward(minibatch_X, parameters)
+
+            # Cost
+            if lambd > 0:
+                cost = compute_cost_with_regularization(
+                    AL, minibatch_Y, parameters, lambd
+                )
+            else:
+                cost = compute_cost(AL, minibatch_Y)
+
+            # Backward
+            if lambd > 0:
+                grads = L_model_backward_with_regularization(
+                    AL, minibatch_Y, caches, lambd
+                )
+            else:
+                grads = L_model_backward(AL, minibatch_Y, caches)
+
+            # Update
+            parameters = update_parameters(parameters, grads, learning_rate)
+
+            epoch_cost += cost * minibatch_X.shape[1]
+
+        epoch_cost /= m
+        costs.append(epoch_cost)
+
+        if print_cost and epoch % 100 == 0:
+            print(
+                f"Epoch {epoch:4d} | "
+                f"lr={learning_rate:.5f} | "
+                f"cost={epoch_cost:.6f}"
+            )
 
     return parameters, costs
