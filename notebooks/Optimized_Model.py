@@ -111,6 +111,7 @@ def parse_destroyed_with_size_check(path: str, min_coverage: float = 0.05) -> Di
 
     return result
 
+
 # Preparing the data 
 def load_and_resize_images(images_folder: str, target_size: Tuple[int, int] = (64, 64)):
     """
@@ -194,7 +195,7 @@ def relu(Z):
     cache = Z 
     return A, cache
 
-    
+
 def relu_backward(dA, cache):
     """
     Implement the backward propagation for a single RELU unit.
