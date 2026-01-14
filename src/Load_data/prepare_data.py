@@ -7,6 +7,8 @@ from typing import Tuple, List
 import cv2
 import numpy as np
 
+import h5py
+
 
 def load_and_resize_images(folder: str, size: Tuple[int, int] = (64, 64)) -> Tuple[np.ndarray, List[str]]:
     """
@@ -228,3 +230,19 @@ def parse_destroyed_with_size_check(path: str, min_coverage: float = 0.05) -> Di
         result[filename_key] = int(is_destroyed)
 
     return result
+
+
+def load_cached_dataset(cache_path):
+    if not os.path.exists(cache_path):
+        raise FileNotFoundError(
+            f"Cache not found: {cache_path}. Build it first."
+        )
+
+    print(f"⚡ Loading dataset from {cache_path}")
+    with h5py.File(cache_path, "r") as f:
+        X_train = f["X_train"][:]
+        Y_train = f["Y_train"][:]
+        X_test  = f["X_test"][:]
+        Y_test  = f["Y_test"][:]
+
+    return X_train, Y_train, X_test, Y_test
