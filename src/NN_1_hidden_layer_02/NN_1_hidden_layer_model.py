@@ -48,7 +48,7 @@ def initialize_parameters(n_x, n_h, n_y, seed=3):
     # W2 = ...
     # b2 = ...
     # YOUR CODE STARTS HERE
-    np.random.seed(seed)
+    #np.random.seed(seed)
     W1 = np.random.randn(n_h,n_x)*0.01
     b1 = np.zeros((n_h,1))
     W2 = np.random.randn(n_y,n_h)*0.01
