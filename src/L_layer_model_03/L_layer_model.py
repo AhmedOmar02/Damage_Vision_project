@@ -99,7 +99,7 @@ def initialize_parameters(n_x, n_h, n_y):
                     b2 -- bias vector of shape (n_y, 1)
     """
     
-    np.random.seed(1)
+    # np.random.seed(1)
     
     W1 = np.random.randn(n_h, n_x)*0.01
     b1 = np.zeros((n_h, 1))
@@ -130,12 +130,12 @@ def initialize_parameters_deep(layer_dims):
                     bl -- bias vector of shape (layer_dims[l], 1)
     """
     
-    np.random.seed(1)
+    # np.random.seed(1)
     parameters = {}
     L = len(layer_dims)            # number of layers in the network
 
     for l in range(1, L):
-        parameters['W' + str(l)] = np.random.randn(layer_dims[l], layer_dims[l-1]) / np.sqrt(layer_dims[l-1]) #*0.01
+        parameters['W' + str(l)] = np.random.randn(layer_dims[l], layer_dims[l-1]) *0.01
         parameters['b' + str(l)] = np.zeros((layer_dims[l], 1))
         
         assert(parameters['W' + str(l)].shape == (layer_dims[l], layer_dims[l-1]))
@@ -233,26 +233,13 @@ def L_model_forward(X, parameters):
     return AL, caches
 
 def compute_cost(AL, Y):
-    """
-    Implement the cost function defined by equation (7).
-
-    Arguments:
-    AL -- probability vector corresponding to your label predictions, shape (1, number of examples)
-    Y -- true "label" vector (for example: containing 0 if non-cat, 1 if cat), shape (1, number of examples)
-
-    Returns:
-    cost -- cross-entropy cost
-    """
-    
     m = Y.shape[1]
-
-    # Compute loss from aL and y.
-    cost = (1./m) * (-np.dot(Y,np.log(AL).T) - np.dot(1-Y, np.log(1-AL).T))
-    
-    cost = np.squeeze(cost)      # To make sure your cost's shape is what we expect (e.g. this turns [[17]] into 17).
-    assert(cost.shape == ())
-    
+    epsilon = 1e-8
+    cost = -(1/m) * np.sum(
+        Y * np.log(AL + epsilon) + (1 - Y) * np.log(1 - AL + epsilon)
+    )
     return cost
+
 
 def linear_backward(dZ, cache):
     """
@@ -371,39 +358,29 @@ def update_parameters(parameters, grads, learning_rate):
         
     return parameters
 
-def predict(X, y, parameters):
-    """
-    This function is used to predict the results of a  L-layer neural network.
-    
-    Arguments:
-    X -- data set of examples you would like to label
-    parameters -- parameters of the trained model
-    
-    Returns:
-    p -- predictions for the given dataset X
-    """
-    
+def predict(X, parameters):
     m = X.shape[1]
-    n = len(parameters) // 2 # number of layers in the neural network
-    p = np.zeros((1,m))
-    
-    # Forward propagation
-    probas, caches = L_model_forward(X, parameters)
+    p = np.zeros((1, m))
 
-    
-    # convert probas to 0/1 predictions
-    for i in range(0, probas.shape[1]):
-        if probas[0,i] > 0.5:
-            p[0,i] = 1
-        else:
-            p[0,i] = 0
-    
-    #print results
-    #print ("predictions: " + str(p))
-    #print ("true labels: " + str(y))
-    print("Accuracy: "  + str(np.sum((p == y)/m)))
-        
+    probas, _ = L_model_forward(X, parameters)
+
+    p[0, :] = (probas > 0.5).astype(int)
     return p
+
+def accuracy(p, y):
+    """
+    Compute accuracy of predictions.
+
+    Arguments:
+    p -- predictions, shape (1, m), values 0 or 1
+    y -- true labels, shape (1, m), values 0 or 1
+
+    Returns:
+    acc -- accuracy as a float in [0, 1]
+    """
+    return np.mean(p == y)
+
+
 
 def print_mislabeled_images(classes, X, y, p):
     """
@@ -423,3 +400,85 @@ def print_mislabeled_images(classes, X, y, p):
         plt.imshow(X[:,index].reshape(64,64,3), interpolation='nearest')
         plt.axis('off')
         plt.title("Prediction: " + classes[int(p[0,index])].decode("utf-8") + " \n Class: " + classes[y[0,index]].decode("utf-8"))
+
+
+
+#gradient checking 
+def dictionary_to_vector(parameters):
+    keys = []
+    vectors = []
+
+    for l in range(1, len(parameters)//2 + 1):
+        for key in [f"W{l}", f"b{l}"]:
+            param = parameters[key]
+            keys.extend([key] * param.size)
+            vectors.append(param.reshape(-1, 1))
+
+    theta = np.concatenate(vectors, axis=0)
+    return theta, keys
+def gradients_to_vector(grads):
+    vectors = []
+    for l in range(1, len(grads)//3 + 1):
+        for key in [f"dW{l}", f"db{l}"]:
+            vectors.append(grads[key].reshape(-1, 1))
+    return np.concatenate(vectors, axis=0)
+
+def vector_to_dictionary(theta, layers_dims):
+    parameters = {}
+    start = 0
+
+    for l in range(1, len(layers_dims)):
+        W_size = layers_dims[l] * layers_dims[l-1]
+        b_size = layers_dims[l]
+
+        parameters[f"W{l}"] = theta[start:start+W_size].reshape(
+            layers_dims[l], layers_dims[l-1]
+        )
+        start += W_size
+
+        parameters[f"b{l}"] = theta[start:start+b_size].reshape(
+            layers_dims[l], 1
+        )
+        start += b_size
+
+    return parameters
+
+def gradient_check_L_layer(
+    parameters,
+    grads,
+    X,
+    Y,
+    layers_dims,
+    epsilon=1e-7,
+    print_msg=True
+):
+    theta, _ = dictionary_to_vector(parameters)
+    grad = gradients_to_vector(grads)
+
+    num_params = theta.shape[0]
+    gradapprox = np.zeros_like(theta)
+
+    for i in range(num_params):
+        theta_plus = np.copy(theta)
+        theta_plus[i][0] += epsilon
+        AL_plus, _ = L_model_forward(X, vector_to_dictionary(theta_plus, layers_dims))
+        J_plus = compute_cost(AL_plus, Y)
+
+        theta_minus = np.copy(theta)
+        theta_minus[i][0] -= epsilon
+        AL_minus, _ = L_model_forward(X, vector_to_dictionary(theta_minus, layers_dims))
+        J_minus = compute_cost(AL_minus, Y)
+
+        gradapprox[i] = (J_plus - J_minus) / (2 * epsilon)
+
+    numerator = np.linalg.norm(grad - gradapprox)
+    denominator = np.linalg.norm(grad) + np.linalg.norm(gradapprox)
+    difference = numerator / denominator
+
+    if print_msg:
+        if difference < 1.5e-7:
+            print("✅ Backprop is correct! difference =", difference)
+        else:
+            print("❌ Backprop error detected! difference =", difference)
+
+    return difference
