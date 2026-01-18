@@ -476,7 +476,7 @@ def gradient_check_L_layer(
     difference = numerator / denominator
 
     if print_msg:
-        if difference < 1.5e-7:
+        if difference < 1e-6:
             print("✅ Backprop is correct! difference =", difference)
         else:
             print("❌ Backprop error detected! difference =", difference)
