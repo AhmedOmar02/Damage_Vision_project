@@ -79,7 +79,57 @@ def build_label_array(ordered_filenames: List[str], labels_dict: dict, default_v
     return np.array(Y).reshape(1, -1)
 
 
+#for eliminated images
+def build_label_array_eliminated(
+    ordered_filenames: List[str],
+    labels_dict: dict
+):
+    """
+    Build a label array aligned with ordered_filenames.
 
+    Only includes filenames present in labels_dict.
+    Eliminated images are skipped entirely.
+
+    Returns:
+        Y: numpy array shaped (1, m)
+        kept_filenames: list of filenames actually used
+    """
+    Y = []
+    kept_filenames = []
+
+    for fname in ordered_filenames:
+        key = fname
+        base = os.path.splitext(fname)[0]
+
+        if key in labels_dict:
+            Y.append(labels_dict[key])
+            kept_filenames.append(fname)
+        elif base in labels_dict:
+            Y.append(labels_dict[base])
+            kept_filenames.append(fname)
+        else:
+            # intentionally eliminated → skip
+            continue
+
+    return np.array(Y).reshape(1, -1), kept_filenames
+
+def filter_X_by_filenames(X, filenames, kept_filenames):
+    """
+    Keep only samples in X whose filename is in kept_filenames.
+    Preserves order of kept_filenames.
+    """
+    index_map = {fname: i for i, fname in enumerate(filenames)}
+
+    kept_indices = []
+    for fname in kept_filenames:
+        if fname in index_map:
+            kept_indices.append(index_map[fname])
+        else:
+            base = os.path.splitext(fname)[0]
+            if base in index_map:
+                kept_indices.append(index_map[base])
+
+    return X[kept_indices]
 
 
 
