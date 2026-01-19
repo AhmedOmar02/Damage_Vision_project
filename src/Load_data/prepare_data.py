@@ -246,3 +246,91 @@ def load_cached_dataset(cache_path):
         Y_test  = f["Y_test"][:]
 
     return X_train, Y_train, X_test, Y_test
+
+
+def parse_destroyed_with_size_check_eliminate_less(
+    path: str,
+    min_coverage: float = 0.05
+) -> Dict[str, int]:
+    """
+    Return {filename: 0 or 1} with the following rules:
+
+    - 1 → at least one destroyed polygon with coverage >= min_coverage
+    - 0 → no destroyed polygons at all
+    - ELIMINATE → destroyed polygons exist, but all are < min_coverage
+    """
+    DESTROYED_LABELS = {"D_Building", "Debris"}
+    result: Dict[str, int] = {}
+
+    try:
+        tree = ET.parse(path)
+    except ET.ParseError as e:
+        raise RuntimeError(f"Failed to parse XML {path}: {e}")
+    except FileNotFoundError:
+        raise RuntimeError(f"XML file not found: {path}")
+
+    root = tree.getroot()
+
+    for image in root.findall(".//image"):
+        filename = image.get("name")
+        if not filename:
+            continue
+
+        filename_key = os.path.basename(filename)
+
+        try:
+            width = int(image.get("width", 0))
+            height = int(image.get("height", 0))
+        except ValueError:
+            continue
+
+        image_area = float(width * height)
+        if image_area == 0:
+            continue
+
+        has_destroyed = False
+        has_large_destroyed = False
+
+        for polygon in image.findall("polygon"):
+            label = polygon.get("label")
+            points = polygon.get("points")
+
+            if label not in DESTROYED_LABELS or not points:
+                continue
+
+            has_destroyed = True
+
+            pts_str = points.strip()
+            raw_pts = pts_str.split(";") if ";" in pts_str else pts_str.split()
+
+            coords = []
+            for p in raw_pts:
+                p = p.strip()
+                if not p or "," not in p:
+                    coords = []
+                    break
+                try:
+                    x_str, y_str = p.split(",")[:2]
+                    coords.append((float(x_str), float(y_str)))
+                except Exception:
+                    coords = []
+                    break
+
+            if not coords:
+                continue
+
+            poly_area = polygon_area(coords)
+            coverage = poly_area / image_area
+
+            if coverage >= min_coverage:
+                has_large_destroyed = True
+                break
+
+        # --- final decision ---
+        if has_large_destroyed:
+            result[filename_key] = 1
+        elif not has_destroyed:
+            result[filename_key] = 0
+        # else: destroyed exists but too small → eliminate
+
+    return result
