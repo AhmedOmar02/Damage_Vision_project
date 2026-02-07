@@ -384,3 +384,19 @@ def parse_destroyed_with_size_check_eliminate_less(
         # else: destroyed exists but too small → eliminate
 
     return result
+
+
+
+def load_image_paths(image_dir):
+    """
+    Returns:
+        paths: list of full image paths
+        filenames: list of image filenames (for XML matching)
+    """
+    filenames = sorted([
+        f for f in os.listdir(image_dir)
+        if f.lower().endswith((".jpg", ".jpeg", ".png"))
+    ])
+
+    paths = [os.path.join(image_dir, f) for f in filenames]
+    return paths, filenames
