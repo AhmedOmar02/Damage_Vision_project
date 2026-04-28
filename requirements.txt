@@ -1,7 +1,6 @@
-jupyterlab==4.0.10
-matplotlib==3.8.0
-numpy==1.26.0
-opencv-python==4.9.0.80
-Pillow==10.1.0
-h5py==3.10.0
-tensorflow==2.16.1
+torch>=2.0.0
+torchvision>=0.15.0
+scikit-learn>=1.2.0
+pandas>=1.5.0
+Pillow>=9.0.0
+tqdm>=4.65.0
